@@ -1,2 +1,2 @@
 # CityInfo
-asp.net core webAPI
+City info API built with asp.net core
