@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using CityInfo.API.Models;
 
 namespace CityInfo.API.Controllers
 {
@@ -41,6 +42,47 @@ namespace CityInfo.API.Controllers
                 return NotFound();
             }
             return Ok(pointOfInterest);
+        }
+
+        [HttpPost]
+        public IActionResult CreatePointOfInterest(int cityId,
+            [FromBody] PointOfInterestForCreationDto pointOfInterest)
+        {
+            if (pointOfInterest.Description == pointOfInterest.Name)
+            {
+                ModelState.AddModelError(
+                    "Description",
+                    "The provided description should be different from the name.");
+            }
+
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var city = CitiesDataStore.Current.Cities.FirstOrDefault(c => c.Id == cityId);
+            if (city == null)
+            {
+                return NotFound();
+            }
+
+            // demo purposes - to be improved
+            var maxPointOfInterestId = CitiesDataStore.Current.Cities.SelectMany(
+                             c => c.PointsOfInterest).Max(p => p.Id);
+
+            var finalPointOfInterest = new PointOfInterestDto()
+            {
+                Id = ++maxPointOfInterestId,
+                Name = pointOfInterest.Name,
+                Description = pointOfInterest.Description
+            };
+
+            city.PointsOfInterest.Add(finalPointOfInterest);
+
+            return CreatedAtRoute(
+                "GetPointOfInterest",
+                new { cityId, id = finalPointOfInterest.Id },
+                finalPointOfInterest);
         }
     }
 }
